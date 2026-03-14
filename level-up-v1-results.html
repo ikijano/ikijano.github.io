@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Level 9 | The 10 Levels of Claude Code</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    color: #fff;
+    font-family: Consolas, 'Courier New', monospace;
+    padding: 0;
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 40px 64px;
+  }
+
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 56px;
+  }
+
+  .top-bar h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  .top-bar h1 .cc { color: #d4845a; }
+
+  .top-bar .brand {
+    font-size: 12px;
+    color: #555;
+    letter-spacing: 1px;
+  }
+
+  .hero {
+    display: flex;
+    gap: 48px;
+    align-items: flex-start;
+    margin-bottom: 48px;
+  }
+
+  .level-display {
+    flex-shrink: 0;
+    text-align: center;
+    min-width: 200px;
+  }
+
+  .level-number {
+    font-size: 140px;
+    font-weight: 400;
+    color: #f59e0b;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .level-label {
+    font-size: 14px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #fff;
+    margin-bottom: 4px;
+    font-weight: 700;
+  }
+
+  .level-name {
+    font-size: 20px;
+    color: #f59e0b;
+    letter-spacing: 1px;
+    font-weight: 700;
+  }
+
+  .summary-box {
+    flex: 1;
+    border: 1px solid #222;
+    padding: 24px;
+    color: #ccc;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .progress {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 32px;
+    padding: 16px 0;
+    border-top: 1px solid #1a1a1a;
+    border-bottom: 1px solid #1a1a1a;
+  }
+
+  .dot {
+    width: 64px;
+    text-align: center;
+    padding: 10px 0;
+    font-size: 12px;
+    color: #333;
+    position: relative;
+  }
+
+  .dot::before {
+    content: '';
+    display: block;
+    width: 10px;
+    height: 10px;
+    border: 1px solid #333;
+    margin: 0 auto 6px;
+  }
+
+  .dot.done::before { background: #4ade80; border-color: #4ade80; }
+  .dot.done { color: #4ade80; }
+
+  .dot.skipped::before { background: #555; border-color: #888; border-style: dashed; }
+  .dot.skipped { color: #888; }
+
+  .dot.current::before {
+    background: #f59e0b;
+    border-color: #f59e0b;
+    width: 14px;
+    height: 14px;
+  }
+
+  .dot.current { color: #f59e0b; font-weight: 700; }
+
+  .dot.throttled::before { background: #f59e0b; border-color: #f59e0b; border-style: dashed; }
+  .dot.throttled { color: #f59e0b; opacity: 0.6; }
+
+  .section-label {
+    font-size: 20px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #fff;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #333;
+    font-weight: 700;
+  }
+
+  .capabilities { margin-bottom: 40px; }
+
+  .cap-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+  }
+
+  .cap-card {
+    border: 1px solid #222;
+    padding: 10px 12px;
+    background: #111;
+    transition: all 0.25s ease;
+    cursor: default;
+  }
+
+  .cap-card:hover {
+    padding: 18px 16px;
+    z-index: 10;
+    position: relative;
+    border-color: #444;
+    background: #1a1a1a;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  }
+
+  .cap-card:hover .cap-title { font-size: 14px; }
+  .cap-card:hover .cap-detail { font-size: 13px; line-height: 1.6; }
+  .cap-card:hover .cap-icon { font-size: 18px; }
+
+  .cap-card.missing {
+    border-color: #1a1a1a;
+    background: transparent;
+    opacity: 0.5;
+  }
+
+  .cap-card.deferred {
+    border-color: #f59e0b33;
+    background: #111;
+    opacity: 0.7;
+  }
+
+  .cap-icon {
+    font-size: 14px;
+    margin-bottom: 4px;
+    color: #4ade80;
+    display: inline-block;
+    margin-right: 6px;
+  }
+
+  .cap-card.missing .cap-icon { color: #555; }
+  .cap-card.deferred .cap-icon { color: #f59e0b; }
+
+  .cap-title {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #fff;
+    margin-bottom: 4px;
+    font-weight: 700;
+    display: inline;
+  }
+
+  .cap-card.missing .cap-title { color: #555; }
+  .cap-card.deferred .cap-title { color: #f59e0b; }
+
+  .cap-detail {
+    font-size: 11px;
+    color: #999;
+    line-height: 1.4;
+    margin-top: 4px;
+  }
+
+  .next-level { margin-bottom: 56px; }
+
+  .next-header {
+    font-size: 22px;
+    color: #fff;
+    margin-bottom: 12px;
+    font-weight: 700;
+  }
+
+  .next-header span { color: #f59e0b; }
+
+  .gap-text {
+    color: #bbb;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 24px;
+    max-width: 720px;
+  }
+
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .step {
+    display: flex;
+    gap: 20px;
+    border: 1px solid #222;
+    padding: 24px;
+    background: #111;
+  }
+
+  .step-num {
+    font-size: 28px;
+    color: #f59e0b;
+    flex-shrink: 0;
+    width: 36px;
+    font-weight: 700;
+  }
+
+  .step-body { flex: 1; }
+
+  .step-title {
+    font-size: 16px;
+    color: #fff;
+    margin-bottom: 10px;
+    font-weight: 700;
+  }
+
+  .step-desc {
+    font-size: 14px;
+    color: #bbb;
+    line-height: 1.7;
+    margin-bottom: 10px;
+  }
+
+  .step-time {
+    font-size: 12px;
+    color: #666;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .insight {
+    border: 1px solid #333;
+    padding: 24px;
+    margin-bottom: 40px;
+    background: #0f0f0f;
+  }
+
+  .insight-title {
+    font-size: 16px;
+    color: #f59e0b;
+    margin-bottom: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .insight-text {
+    font-size: 14px;
+    color: #bbb;
+    line-height: 1.8;
+  }
+
+  .reference { margin-bottom: 48px; }
+
+  .ref-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .ref-table th {
+    text-align: left;
+    color: #555;
+    font-size: 11px;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 10px 16px;
+    border-bottom: 1px solid #222;
+  }
+
+  .ref-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid #111;
+    font-size: 13px;
+  }
+
+  .lvl-num { color: #555; width: 40px; }
+  .lvl-name { color: #ccc; width: 180px; }
+  .lvl-desc { color: #666; }
+
+  .ref-table .current-row td { color: #f59e0b; }
+  .ref-table .current-row .lvl-num { color: #f59e0b; }
+  .ref-table .current-row .lvl-name { color: #f59e0b; }
+  .ref-table .current-row .lvl-desc { color: #f59e0b; }
+
+  .ref-table .done-row td { color: #4ade80; opacity: 0.5; }
+  .ref-table .done-row .lvl-num { color: #4ade80; }
+
+  .ref-table .skipped-row td { color: #888; }
+  .ref-table .skipped-row .lvl-num { color: #888; }
+  .ref-table .skipped-row .lvl-name { color: #888; font-style: italic; }
+
+  .ref-table .throttled-row td { color: #f59e0b; opacity: 0.6; }
+  .ref-table .throttled-row .lvl-num { color: #f59e0b; }
+
+  .legend {
+    display: flex;
+    gap: 24px;
+    margin-top: 12px;
+    font-size: 11px;
+    color: #666;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    display: inline-block;
+  }
+
+  .legend-dot.done { background: #4ade80; }
+  .legend-dot.skipped { background: #555; border: 1px dashed #888; }
+  .legend-dot.current { background: #f59e0b; }
+  .legend-dot.throttled { background: #f59e0b; opacity: 0.5; border: 1px dashed #f59e0b; }
+
+  .footer {
+    text-align: center;
+    padding-top: 32px;
+    border-top: 1px solid #1a1a1a;
+    color: #333;
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+
+  .footer a { color: #555; text-decoration: none; }
+  .footer a:hover { color: #f59e0b; }
+
+  .footer .cta {
+    color: #666;
+    margin-top: 8px;
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="top-bar">
+    <h1>The 10 Levels of <span class="cc">Claude Code</span></h1>
+    <div class="brand">thegenaicircle.com</div>
+  </div>
+
+  <div class="hero">
+    <div class="level-display">
+      <div class="level-label">Your Level</div>
+      <div class="level-number">9</div>
+      <div class="level-name">Always On</div>
+    </div>
+    <div class="summary-box">424-line governance CLAUDE.md. 10 specialized agents. 11 chained skills (2,337 lines). Custom workflow CLI built on top of gh CLI. Multi-layer safety hooks with rate limiting. Night-shift autonomous execution of multi-issue epics. Level 10 swarm patterns built but deliberately throttled by trust gates. Progression wasn't linear -- jumped to what the business needed, deprioritized what it didn't. Browser feedback loop (Level 7) is the one gap left to backfill. The scheduler for full autonomy is trivial to write -- waiting for a reliability epic to land before flipping the switch.</div>
+  </div>
+
+  <div class="progress">
+    <div class="dot done"><span>0</span></div>
+    <div class="dot done"><span>1</span></div>
+    <div class="dot done"><span>2</span></div>
+    <div class="dot done"><span>3</span></div>
+    <div class="dot done"><span>4</span></div>
+    <div class="dot done"><span>5</span></div>
+    <div class="dot done"><span>6</span></div>
+    <div class="dot skipped"><span>7</span></div>
+    <div class="dot done"><span>8</span></div>
+    <div class="dot current"><span>9</span></div>
+    <div class="dot throttled"><span>10</span></div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="legend-dot done"></span> Achieved</div>
+    <div class="legend-item"><span class="legend-dot skipped"></span> Deprioritized</div>
+    <div class="legend-item"><span class="legend-dot current"></span> Current</div>
+    <div class="legend-item"><span class="legend-dot throttled"></span> Built, trust-gated</div>
+  </div>
+
+  <div style="margin-bottom: 32px;"></div>
+
+  <div class="capabilities">
+    <div class="section-label">What You Have</div>
+    <div class="cap-grid">
+      <div class="cap-card">
+        <div class="cap-icon">&#10003;</div>
+        <div class="cap-title">CLAUDE.MD</div>
+        <div class="cap-detail">424 lines, governance-grade<br>TDD mandate, legacy freeze, deployment rules</div>
+      </div>
+      <div class="cap-card">
+        <div class="cap-icon">&#10003;</div>
+        <div class="cap-title">SKILLS</div>
+        <div class="cap-detail">11 skills, 2,337 lines<br>Epic orchestration, analysis, PR pipeline</div>
+      </div>
+      <div class="cap-card">
+        <div class="cap-icon">&#10003;</div>
+        <div class="cap-title">AGENTS</div>
+        <div class="cap-detail">10 specialized agents<br>Read-only planner, architect, validators</div>
+      </div>
+      <div class="cap-card">
+        <div class="cap-icon">&#10003;</div>
+        <div class="cap-title">HOOKS</div>
+        <div class="cap-detail">Multi-layer defense<br>Branch protection, rate limiting, guards</div>
+      </div>
+      <div class="cap-card">
+        <div class="cap-icon">&#10003;</div>
+        <div class="cap-title">CUSTOM CLI</div>
+        <div class="cap-detail">Workflow CLI wrapping gh CLI<br>24 scripts encoding team process</div>
+      </div>
+      <div class="cap-card">
+        <div class="cap-icon">&#10003;</div>
+        <div class="cap-title">MEMORY</div>
+        <div class="cap-detail">10 memory files<br>Lessons, decisions, constraints</div>
+      </div>
+      <div class="cap-card">
+        <div class="cap-icon">&#10003;</div>
+        <div class="cap-title">SKILL CHAINING</div>
+        <div class="cap-detail">Full pipeline<br>analyze &rarr; plan &rarr; implement &rarr; review &rarr; done</div>
+      </div>
+      <div class="cap-card">
+        <div class="cap-icon">&#10003;</div>
+        <div class="cap-title">HEADLESS MODE</div>
+        <div class="cap-detail">Built and tested via Docker<br>Chose terminals for visibility</div>
+      </div>
+      <div class="cap-card">
+        <div class="cap-icon">&#10003;</div>
+        <div class="cap-title">MULTI-AGENT</div>
+        <div class="cap-detail">Parallel terminals + agent teams<br>Role isolation per instance</div>
+      </div>
+      <div class="cap-card">
+        <div class="cap-icon">&#10003;</div>
+        <div class="cap-title">NIGHT SHIFT</div>
+        <div class="cap-detail">Autonomous overnight execution<br>Full epic pipeline unattended</div>
+      </div>
+      <div class="cap-card deferred">
+        <div class="cap-icon">&#9671;</div>
+        <div class="cap-title">BROWSER</div>
+        <div class="cap-detail">Deprioritized, not missing<br>UI feedback loop is real frontier</div>
+      </div>
+      <div class="cap-card deferred">
+        <div class="cap-icon">&#9671;</div>
+        <div class="cap-title">FULL AUTONOMY</div>
+        <div class="cap-detail">Patterns built, trust-gated<br>Waiting on reliability epic</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="insight">
+    <div class="insight-title">Why this path isn't linear</div>
+    <div class="insight-text">
+      The level-up framework measures one axis: "how automated is your Claude Code usage?" Real mastery is multi-dimensional. Process maturity, safety architecture, team scalability, and business alignment all matter -- and none of them show up in a linear 0-to-10 scale.<br><br>
+      This assessment jumped from Level 5 to 8-9 because orchestrating reliable epic pipelines delivered more business value than browser screenshots or headless scripts. Level 7 was deprioritized -- not skipped from lack of skill, but because it wasn't the highest-value next step. Level 10 patterns are built but deliberately throttled because trust is earned incrementally, not declared.<br><br>
+      The framework would rank someone running a cron job with <code>claude -p</code> and no safety gates as Level 9. Meanwhile, this setup has multi-layer defense (read-only agents, branch protection hooks, rate limiting, risk-calibrated approval gates) born from firsthand experience cleaning up after uncontrolled AI-generated PRs.<br><br>
+      Single-axis frameworks reward collecting capabilities. Multi-dimensional reality rewards using the right capability at the right time.
+    </div>
+  </div>
+
+  <div class="next-level">
+    <div class="section-label">Remaining Frontiers</div>
+    <div class="next-header">Backfill: <span>Level 7</span> -- Browser Feedback Loop</div>
+    <div class="gap-text">The one genuinely deprioritized capability. The UI framework (server-side rendered with interactive components) doesn't have a clean feedback loop where Claude can see what it built. Multiple approaches tried, none stuck. This is the real remaining friction -- not a knowledge gap, but an unsolved integration problem.</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Define what "browser feedback" means for your stack</div>
+          <div class="step-desc">Generic Level 7 assumes React + Playwright. Server-rendered UI frameworks have different needs. The feedback loop might be: edit component, render it, verify the output visually. Or it might be: run the app, hit the page, check DOM structure. The right approach depends on the stack, not the framework's assumptions.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Find the minimal viable loop</div>
+          <div class="step-desc">Full E2E browser automation might be overkill. The smallest loop that catches real bugs is better than a sophisticated loop that doesn't run reliably on your platform.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="next-level">
+    <div class="next-header">Unlock: <span>Level 10</span> -- Flip the Switch</div>
+    <div class="gap-text">The swarm patterns exist: autonomous epic execution, agent orchestration, safety boundaries. What's gating it isn't capability -- it's trust. A reliability epic needs to land first, then prove itself over N supervised runs. Only then does the scheduled trigger make sense.</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">A</div>
+        <div class="step-body">
+          <div class="step-title">Land the workflow reliability epic</div>
+          <div class="step-desc">Fix known failure modes: agent hangs, stale state, sync edge cases. Until this ships, scheduling would automate unreliable execution.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">B</div>
+        <div class="step-body">
+          <div class="step-title">Earn trust through supervised runs</div>
+          <div class="step-desc">Track success rate, false approvals, output quality, cleanup needed. When the numbers hit the threshold, trust is earned -- not assumed.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">C</div>
+        <div class="step-body">
+          <div class="step-title">Schedule it</div>
+          <div class="step-desc">The script is trivial. Pick ready-to-implement epics from the project board, run the pipeline, post results. The architecture is ready. The decision to wait is the right one.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="reference">
+    <div class="section-label">All 10 Levels</div>
+    <table class="ref-table">
+      <thead>
+        <tr>
+          <th>Level</th>
+          <th>Name</th>
+          <th>What It Means</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="done-row">
+          <td class="lvl-num">0</td>
+          <td class="lvl-name">Terminal Tourist</td>
+          <td class="lvl-desc">Just installed it. Typing prompts like ChatGPT in a terminal.</td>
+        </tr>
+        <tr class="done-row">
+          <td class="lvl-num">1</td>
+          <td class="lvl-name">Grounded</td>
+          <td class="lvl-desc">CLAUDE.md exists. Claude knows who you are and what you want.</td>
+        </tr>
+        <tr class="done-row">
+          <td class="lvl-num">2</td>
+          <td class="lvl-name">Connected</td>
+          <td class="lvl-desc">Custom workflow CLI over generic MCPs. Deliberate architectural choice.</td>
+        </tr>
+        <tr class="done-row">
+          <td class="lvl-num">3</td>
+          <td class="lvl-name">Skilled</td>
+          <td class="lvl-desc">11 skills, from simple to 245-line epic orchestrators.</td>
+        </tr>
+        <tr class="done-row">
+          <td class="lvl-num">4</td>
+          <td class="lvl-name">Context Architect</td>
+          <td class="lvl-desc">10 memory files. Institutional knowledge across 700+ sessions.</td>
+        </tr>
+        <tr class="done-row">
+          <td class="lvl-num">5</td>
+          <td class="lvl-name">System Builder</td>
+          <td class="lvl-desc">Chained pipeline. 10 agents. Approval gates. Multi-layer hooks.</td>
+        </tr>
+        <tr class="done-row">
+          <td class="lvl-num">6</td>
+          <td class="lvl-name">Pipeline Engineer</td>
+          <td class="lvl-desc">Headless mode tested via Docker. Chose visibility over automation.</td>
+        </tr>
+        <tr class="skipped-row">
+          <td class="lvl-num">7</td>
+          <td class="lvl-name">Browser Commander</td>
+          <td class="lvl-desc">Deprioritized. UI feedback loop is the real frontier.</td>
+        </tr>
+        <tr class="done-row">
+          <td class="lvl-num">8</td>
+          <td class="lvl-name">Multi-Agent Operator</td>
+          <td class="lvl-desc">Parallel terminals with role isolation. Agent teams enabled.</td>
+        </tr>
+        <tr class="current-row">
+          <td class="lvl-num">9</td>
+          <td class="lvl-name">Always On</td>
+          <td class="lvl-desc">Night-shift autonomous epic execution. Pipeline runs unattended.</td>
+        </tr>
+        <tr class="throttled-row">
+          <td class="lvl-num">10</td>
+          <td class="lvl-name">Swarm Architect</td>
+          <td class="lvl-desc">Patterns built. Trust-gated. Waiting on reliability milestone.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    <a href="https://thegenaicircle.com">thegenaicircle.com</a> / <a href="https://thegenaicircle.com">/level-up</a>
+    <div class="cta">Run /level-up again when you're ready for the next step.</div>
+  </div>
+
+</div>
+</body>
+</html>
